@@ -140,23 +140,16 @@ return $data
 
 # https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-how-to-use-powershell
 
-
+# Connect to Azure Storage
 $ctx = New-AzStorageContext -ConnectionString $azstoragestring
 $tableName = "LastRead"
 
+# Get Adv Hunting Table Names from Azure Storage Table Service
 $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
-
-#$partitionKey1 = "AdvHuntingTables"
-#Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("1") -property @{"advTableName"="EmailEvents";"LastRead"=""}
-#Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("2") -property @{"advTableName"="EmailAttachmentInfo";"LastRead"=""}
-#Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("3") -property @{"advTableName"="EmailUrlInfo";"LastRead"=""}
-#Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("4") -property @{"advTableName"="EmailPostDeliveryEvents";"LastRead"=""}
-
-#$rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value "EmailEvents" -operator Equal
-
 $advNames = Get-AzTableRow -table $cloudTable
 $arrNames = $advnames.advTableName
 
+# Loop through all the adv hunting tables
 ForEach ($advName in $arrNames){
     $rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value $advName -operator Equal
     #Check Last Read Value, if blank set for 30 days ago.
@@ -173,7 +166,9 @@ ForEach ($advName in $arrNames){
         Write-Verbose -Message $lastRead
     }
     #>
+    # Auth to M365 API
     $headerParams = Get-AuthToken $clientId $appSecret $tenantId 
+    # Get data for the table
     $dataReturned = Get-APIData $headerParams $advName $lastRead
 
     if($null -ne $dataReturned){
