@@ -11,3 +11,188 @@ if ($Timer.IsPastDue) {
 
 # Write an information log with the current time.
 Write-Host "PowerShell timer trigger function ran! TIME: $currentUTCtime"
+#########################################
+# TODO:
+# Set up ENVs for WorkspaceId & Key
+# Date Time, UTC :  (Get-Date).ToUniversalTime()
+#########################################
+$tenantId = $env:tenantID
+$clientId = $env:clientID
+$appSecret = $env:appSecret
+$WorkspaceId = $env:WorkspaceId
+$SharedKey = $env:SharedKey
+$azstoragestring = $env:WEBSITE_CONTENTAZUREFILECONNECTIONSTRING
+
+
+
+function Build-signature ($CustomerID, $SharedKey, $Date, $ContentLength, $method, $ContentType, $resource) {
+    $xheaders = 'x-ms-date:' + $Date
+    $stringToHash = $method + "`n" + $contentLength + "`n" + $contentType + "`n" + $xHeaders + "`n" + $resource
+    $bytesToHash = [text.Encoding]::UTF8.GetBytes($stringToHash)
+    $keyBytes = [Convert]::FromBase64String($SharedKey)
+    $sha256 = New-Object System.Security.Cryptography.HMACSHA256
+    $sha256.key = $keyBytes
+    $calculateHash = $sha256.ComputeHash($bytesToHash)
+    $encodeHash = [convert]::ToBase64String($calculateHash)
+    $authorization = 'SharedKey {0}:{1}' -f $CustomerID,$encodeHash
+    return $authorization
+}
+#############################################################################
+## Set-LogAnalyticsData
+#############################################################################
+Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
+    $method = "POST"
+    $ContentType = 'application/json'
+    $resource = '/api/logs'
+    $rfc1123date = ((Get-Date).ToUniversalTime()).ToString('r')
+    $ContentLength = $Body.Length
+    $signature = Build-signature `
+        -customerId $WorkspaceId `
+        -sharedKey $SharedKey `
+        -date $rfc1123date `
+        -contentLength $ContentLength `
+        -method $method `
+        -contentType $ContentType `
+        -resource $resource
+    $uri = "https://" + $WorkspaceId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
+    $headers = @{
+        "Authorization" = $signature;
+        "Log-Type" = $type;
+        "x-ms-date" = $rfc1123date
+        "time-generated-field" = $dateTime
+    }
+    $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $ContentType -Headers $headers -Body $body -UseBasicParsing
+    Write-Verbose -message ('Post Function Return Code ' + $response.statuscode)
+    return $response.statuscode
+}
+
+
+#############################################################################
+## Logon to API to grap token
+#############################################################################
+function Get-AuthToken{
+    [cmdletbinding()]
+        Param(
+            [Parameter(Mandatory = $true, Position = 0)]
+            [string]$clientId,
+            [parameter(Mandatory = $true, Position = 1)]
+            [string]$appSecret,
+            [Parameter(Mandatory = $true, Position = 2)]
+            [string]$tenantId
+        )
+$resourceAppIdUri = 'https://api-gcc.security.microsoft.us'
+$oAuthUri = "https://login.microsoftonline.com/$tenantId/oauth2/token"
+$authBody = [Ordered] @{
+  resource = $resourceAppIdUri
+  client_id = $clientId
+  client_secret = $appSecret
+  grant_type = 'client_credentials'
+}
+$authResponse = Invoke-RestMethod -Method Post -Uri $oAuthUri -Body $authBody -ErrorAction Stop
+$token = $authResponse | Select-Object -ExpandProperty access_token
+# Out-File -FilePath "./Latest-token.txt" -InputObject $token
+return $token
+}
+#############################################################################
+## Start API Query
+#############################################################################
+
+function Get-APIData{
+    [cmdletbinding()]
+        Param(
+            [Parameter(Mandatory = $true, Position = 0)]
+            [string]$token,
+            [parameter(Mandatory = $true, Position = 1)]
+            [string]$advHTableName,
+            [Parameter(Mandatory = $true, Position = 2)]
+            [string]$lastRead
+        )
+$url = "https://api-gcc.security.microsoft.us/api/advancedhunting/run"
+
+$Body = @{
+    'Query' = '{0} | where Timestamp > datetime("{1}")' -f $advHTableName,$lastRead
+}
+
+#$Body = @{
+#    'Query' = 'EmailEvents | take 2'
+#}
+
+# Set the webrequest headers
+$headers = @{
+    'Content-Type' = 'application/json'
+    'Accept' = 'application/json'
+    'Authorization' = "Bearer $token"
+}
+
+$Body = $Body | ConvertTo-Json
+
+$response = Invoke-WebRequest -Method Post -Body $body -Uri $url -Headers $headers -ErrorAction Stop
+
+# Extract the results.
+$data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
+
+return $data
+}
+
+#############################################################################
+## Main()
+#############################################################################
+
+# https://docs.microsoft.com/en-us/azure/storage/tables/table-storage-how-to-use-powershell
+
+
+$ctx = New-AzStorageContext -ConnectionString $azstoragestring
+$tableName = "LastRead"
+
+$cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
+
+#$partitionKey1 = "AdvHuntingTables"
+#Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("1") -property @{"advTableName"="EmailEvents";"LastRead"=""}
+#Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("2") -property @{"advTableName"="EmailAttachmentInfo";"LastRead"=""}
+#Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("3") -property @{"advTableName"="EmailUrlInfo";"LastRead"=""}
+#Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("4") -property @{"advTableName"="EmailPostDeliveryEvents";"LastRead"=""}
+
+#$rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value "EmailEvents" -operator Equal
+
+$advNames = Get-AzTableRow -table $cloudTable
+$arrNames = $advnames.advTableName
+
+ForEach ($advName in $arrNames){
+    $rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value $advName -operator Equal
+    #Check Last Read Value, if blank set for 30 days ago.
+    if($rowReturn.LastRead -eq ""){
+        $lastRead = (Get-Date).addDays(-30)
+    } else {
+        $lastRead = $rowReturn.LastRead
+    }
+
+    # Check if time is UTC, Convert to UTC if not.
+    <# 
+    if ($lastRead.kind.tostring() -ne 'Utc'){
+        $lastRead = $lastRead.ToUniversalTime()
+        Write-Verbose -Message $lastRead
+    }
+    #>
+    $headerParams = Get-AuthToken $clientId $appSecret $tenantId 
+    $dataReturned = Get-APIData $headerParams $advName $lastRead
+
+    if($null -ne $dataReturned){
+        Write-Host "Data Recieved $dataReturned.Length"
+        $returnCode = Set-LogAnalyticsData -WorkspaceId $WorkspaceId -SharedKey $SharedKey -Body $dataReturned -Type $advName
+        Write-Host "Post Statement Return Code $returnCode"
+        if ($returnCode -eq 200){
+            # Update LastRead to now
+            $lastRead = Get-Date
+            $rowReturn.LastRead = $lastRead
+            # To commit the change, pipe the updated record into the update cmdlet.
+            $rowReturn | Update-AzTableRow -table $cloudTable
+        }
+
+    }
+
+
+}
+
+
+
+return $returnCode
