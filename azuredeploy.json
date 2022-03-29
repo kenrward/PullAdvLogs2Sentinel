@@ -23,7 +23,8 @@
             "Name": "O365Data",
             "FunctionName": "[concat(variables('Name'), 'fn', uniqueString(resourceGroup().id, subscription().id))]",
             "StorageAccountName": "[tolower(concat(variables('Name'), 'sa', uniqueString(resourceGroup().id, subscription().id)))]",
-            "KeyVaultName": "[concat(variables('Name'), 'kv', uniqueString(resourceGroup().id, subscription().id))]"
+            "KeyVaultName": "[concat(variables('Name'), 'kv', uniqueString(resourceGroup().id, subscription().id))]",
+            "tableServiceName": "LastRead"
     },
     "resources": [
         {
@@ -219,8 +220,7 @@
                         "tenantGuid": "[subscription().tenantId]",
                         "workspaceID": "[parameters('workspaceID')]",
                         "workspaceKey": "[concat('@Microsoft.KeyVault(SecretUri=', reference(resourceId('Microsoft.KeyVault/vaults/secrets', variables('KeyVaultName'), 'workspaceKey')).SecretUriWithVersion, ')')]",
-                        "WEBSITE_RUN_FROM_PACKAGE": "https://github.com/Azure/Azure-Sentinel/blob/master/DataConnectors/O365%20Data/O365APItoAS-Template.zip?raw=true",
-                        "customLogName": "O365"
+                        "WEBSITE_RUN_FROM_PACKAGE": "https://github.com/kenrward/PullAdvLogs2Sentinel/blob/master/PullAdvLogs2Sentinel.zip?raw=true"
                     }
                 }
             ]
@@ -260,6 +260,47 @@
             "properties": {
                 "shareQuota": 5120
             }
+        },
+        {
+        "name": "[concat(variables('StorageAccountName'),'/', variables('tableServiceName'))]",
+        "type": "Microsoft.Storage/storageAccounts/tableServices",
+        "apiVersion": "2019-06-01",
+        "properties": {
+            "cors": {
+                "corsRules": [
+                    {
+                        "allowedOrigins": [
+                            "*"
+                        ],
+                        "allowedMethods": [
+                            "PUT",
+                            "GET",
+                            "POST"
+                        ],
+                        "maxAgeInSeconds": 0,
+                        "exposedHeaders": [
+                            "*"
+                        ],
+                        "allowedHeaders": [
+                            "*"
+                        ]
+                    }
+                ]
+            }
+        },
+        "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]"
+        ],
+        "resources": []
+        },
+        {
+            "name": "[concat(variables('StorageAccountName'),'/default/',variables('tableServiceName'))]",
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', variables('StorageAccountName'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]"
+            ]
         },
         {
             "type": "Microsoft.KeyVault/vaults/accessPolicies",
