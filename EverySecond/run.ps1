@@ -21,7 +21,7 @@ $clientId = $env:clientID
 $appSecret = $env:appSecret
 $WorkspaceId = $env:WorkspaceId
 $SharedKey = $env:SharedKey
-$azstoragestring = $env:WEBSITE_CONTENTAZUREFILECONNECTIONSTRING
+$azstoragestring = $env:azstoragestring
 
 
 
@@ -151,8 +151,10 @@ $arrNames = $advnames.advTableName
 
 # Loop through all the adv hunting tables
 ForEach ($advName in $arrNames){
-    Write-Debug "--------- CURRENT Table: $advName ---------------------------"
+    Write-Host "--------- CURRENT Table: $advName ---------------------------"
+    Write-Host "$cloudTable : $advName"
     $rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value $advName -operator Equal
+    Write-Host "RowReturn: $rowReturn"
     #Check Last Read Value, if blank set for 30 days ago.
     if($rowReturn.LastRead -eq ""){
         $lastRead = (Get-Date).addDays(-30)
@@ -168,15 +170,17 @@ ForEach ($advName in $arrNames){
     }
     #>
     # Auth to M365 API
+    Write-Host "LastRead: $lastRead"
     $headerParams = Get-AuthToken $clientId $appSecret $tenantId 
     # Get data for the table
     $dataReturned = Get-APIData $headerParams $advName $lastRead
-
+    Write-Host "dataReturned: $dataReturned"
     if($null -ne $dataReturned){
-        Write-Debug "Data Recieved $dataReturned.Length"
+        #Write-Host "Data Recieved $dataReturned.Length"
         if($dataReturned.Length -gt 0){
+            Write-Host "-WorkspaceId: $WorkspaceId SharedKey $SharedKey AdvName $advName"
             $returnCode = Set-LogAnalyticsData -WorkspaceId $WorkspaceId -SharedKey $SharedKey -Body $dataReturned -Type $advName
-            Write-Debug "Post Statement Return Code $returnCode"
+            Write-Host "Post Statement Return Code $returnCode"
             if ($returnCode -eq 200){
                 # Update LastRead to now
                 $lastRead = Get-Date
