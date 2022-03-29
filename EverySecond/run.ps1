@@ -141,7 +141,7 @@ try{
 # Extract the results.
 $data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
 if($data.statuscode -ge 300){
-    Write-Host "Error pulling Adv Data, could be no vaild results: $data.statuscode"
+    Write-Debug "Error pulling Adv Data, could be no vaild results: $data.statuscode"
     return $null
 }else{
     return $data
@@ -166,10 +166,10 @@ $arrNames = $advnames.advTableName
 
 # Loop through all the adv hunting tables
 ForEach ($advName in $arrNames){
-    Write-Host "--------- CURRENT Table: $advName ---------------------------"
-    Write-Host "$cloudTable : $advName"
+    Write-Debug "--------- CURRENT Table: $advName ---------------------------"
+    Write-Debug "$cloudTable : $advName"
     $rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value $advName -operator Equal
-    Write-Host "RowReturn: $rowReturn"
+    Write-Debug "RowReturn: $rowReturn"
     #Check Last Read Value, if blank set for 30 days ago.
     if($rowReturn.LastRead -eq ""){
         $lastRead = (Get-Date).addDays(-30)
@@ -185,18 +185,18 @@ ForEach ($advName in $arrNames){
     }
     #>
     # Auth to M365 API
-    Write-Host "LastRead: $lastRead"
+    Write-Debug "LastRead: $lastRead"
     $headerParams = Get-AuthToken $clientId $appSecret $tenantId 
     # Get data for the table
-    Write-Host "Header params : $headerParams AdvName: $advname LastRead: $lastRead"
+    Write-Debug "Header params : $headerParams AdvName: $advname LastRead: $lastRead"
     $dataReturned = Get-APIData $headerParams $advName $lastRead
-    Write-Host "dataReturned: $dataReturned"
+    Write-Debug "dataReturned: $dataReturned"
     if($null -ne $dataReturned){
-        #Write-Host "Data Recieved $dataReturned.Length"
+        #Write-Debug "Data Recieved $dataReturned.Length"
         if($dataReturned.Length -gt 0){
-            Write-Host "-WorkspaceId: $WorkspaceId SharedKey $SharedKey AdvName $advName"
+            Write-Debug "-WorkspaceId: $WorkspaceId SharedKey $SharedKey AdvName $advName"
             $returnCode = Set-LogAnalyticsData -WorkspaceId $WorkspaceId -SharedKey $SharedKey -Body $dataReturned -Type $advName
-            Write-Host "Post Statement Return Code $returnCode"
+            Write-Debug "Post Statement Return Code $returnCode"
             if ($returnCode -eq 200){
                 # Update LastRead to now
                 $lastRead = Get-Date
