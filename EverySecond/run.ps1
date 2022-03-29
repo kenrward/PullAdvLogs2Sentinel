@@ -199,8 +199,7 @@ ForEach ($advName in $arrNames){
             Write-Debug "Post Statement Return Code $returnCode"
             if ($returnCode -eq 200){
                 # Update LastRead to now
-                $lastRead = Get-Date
-                $rowReturn.LastRead = $lastRead
+                $rowReturn.LastRead = $currentUTCtime
                 # To commit the change, pipe the updated record into the update cmdlet.
                 $rowReturn | Update-AzTableRow -table $cloudTable
             }
