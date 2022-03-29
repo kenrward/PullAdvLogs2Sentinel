@@ -1,3 +1,6 @@
+## PROOF of CONCEPT ONLY
+This code is a proof of concept to show how data can be pulled from M365 Advanced Hunting API to Azure Sentinel.  It is **NOT** prodcution ready code.  Author assumes no responsibility for its use nor implies any warranty.
+
 # TimerTrigger - PowerShell
 
 The `TimerTrigger` makes it incredibly easy to have your functions executed on a schedule. This sample demonstrates a simple use case of calling your function every 5 minutes.
