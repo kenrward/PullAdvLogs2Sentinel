@@ -55,17 +55,17 @@ Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
         -contentType $ContentType `
         -resource $resource
     $uri = "https://" + $WorkspaceId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
-    Write-Host "URI: $uri"
+    Write-Debug "URI: $uri"
     $headers = @{
         "Authorization" = $signature;
         "Log-Type" = $type;
         "x-ms-date" = $rfc1123date
         "time-generated-field" = $currentUTCtime
     }
-    Write-Host "Headers Log Post: $headers"
+    Write-Debug "Headers Log Post: $headers"
     $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $ContentType -Headers $headers -Body $body -UseBasicParsing
     Write-Verbose -message ('Post Function Return Code ' + $response.statuscode)
-    Write-Host "Response Code: $response.statuscode"
+    Write-Debug "Response Code: $response.statuscode"
     return $response.statuscode
 }
 
@@ -134,7 +134,7 @@ try{
     $data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
     return $data
 } catch {
-    Write-Host "Error pulling Adv Data, could be no vaild results: $data.statuscode"
+    Write-Debug "Error pulling Adv Data, could be no vaild results: $data.statuscode"
     return $null
 }
 <#
