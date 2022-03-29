@@ -55,14 +55,17 @@ Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
         -contentType $ContentType `
         -resource $resource
     $uri = "https://" + $WorkspaceId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
+    Write-Host "URI: $uri"
     $headers = @{
         "Authorization" = $signature;
         "Log-Type" = $type;
         "x-ms-date" = $rfc1123date
-        "time-generated-field" = $dateTime
+        "time-generated-field" = $currentUTCtime
     }
+    Write-Host "Headers Log Post: $headers"
     $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $ContentType -Headers $headers -Body $body -UseBasicParsing
     Write-Verbose -message ('Post Function Return Code ' + $response.statuscode)
+    Write-Host "Response Code: $response.statuscode"
     return $response.statuscode
 }
 
@@ -126,12 +129,24 @@ $headers = @{
 
 $Body = $Body | ConvertTo-Json
 
-$response = Invoke-WebRequest -Method Post -Body $body -Uri $url -Headers $headers -ErrorAction Stop
-
+try{
+    $response = Invoke-WebRequest -Method Post -Body $body -Uri $url -Headers $headers -ErrorAction Stop
+    $data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
+    return $data
+} catch {
+    Write-Host "Error pulling Adv Data, could be no vaild results: $data.statuscode"
+    return $null
+}
+<#
 # Extract the results.
 $data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
-
-return $data
+if($data.statuscode -ge 300){
+    Write-Host "Error pulling Adv Data, could be no vaild results: $data.statuscode"
+    return $null
+}else{
+    return $data
+}
+#>
 }
 
 #############################################################################
@@ -173,6 +188,7 @@ ForEach ($advName in $arrNames){
     Write-Host "LastRead: $lastRead"
     $headerParams = Get-AuthToken $clientId $appSecret $tenantId 
     # Get data for the table
+    Write-Host "Header params : $headerParams AdvName: $advname LastRead: $lastRead"
     $dataReturned = Get-APIData $headerParams $advName $lastRead
     Write-Host "dataReturned: $dataReturned"
     if($null -ne $dataReturned){
