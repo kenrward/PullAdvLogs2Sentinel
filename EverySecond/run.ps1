@@ -151,6 +151,7 @@ $arrNames = $advnames.advTableName
 
 # Loop through all the adv hunting tables
 ForEach ($advName in $arrNames){
+    Write-Debug "--------- CURRENT Table: $advName ---------------------------"
     $rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value $advName -operator Equal
     #Check Last Read Value, if blank set for 30 days ago.
     if($rowReturn.LastRead -eq ""){
@@ -185,10 +186,6 @@ ForEach ($advName in $arrNames){
             }
         }
     }
-
-
 }
-
-
 
 return $returnCode
