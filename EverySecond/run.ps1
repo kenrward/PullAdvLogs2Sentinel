@@ -172,17 +172,18 @@ ForEach ($advName in $arrNames){
     $dataReturned = Get-APIData $headerParams $advName $lastRead
 
     if($null -ne $dataReturned){
-        Write-Host "Data Recieved $dataReturned.Length"
-        $returnCode = Set-LogAnalyticsData -WorkspaceId $WorkspaceId -SharedKey $SharedKey -Body $dataReturned -Type $advName
-        Write-Host "Post Statement Return Code $returnCode"
-        if ($returnCode -eq 200){
-            # Update LastRead to now
-            $lastRead = Get-Date
-            $rowReturn.LastRead = $lastRead
-            # To commit the change, pipe the updated record into the update cmdlet.
-            $rowReturn | Update-AzTableRow -table $cloudTable
+        Write-Debug "Data Recieved $dataReturned.Length"
+        if($dataReturned.Length -gt 0){
+            $returnCode = Set-LogAnalyticsData -WorkspaceId $WorkspaceId -SharedKey $SharedKey -Body $dataReturned -Type $advName
+            Write-Debug "Post Statement Return Code $returnCode"
+            if ($returnCode -eq 200){
+                # Update LastRead to now
+                $lastRead = Get-Date
+                $rowReturn.LastRead = $lastRead
+                # To commit the change, pipe the updated record into the update cmdlet.
+                $rowReturn | Update-AzTableRow -table $cloudTable
+            }
         }
-
     }
 
 
