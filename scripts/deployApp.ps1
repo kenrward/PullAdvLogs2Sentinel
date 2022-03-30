@@ -1,7 +1,7 @@
 
 $today=Get-Date -Format "MM-dd-yyyy"
 $deploymentName="ExampleDeployment"+"$today"
-$resoureceGroupName = "AA101"
+$resoureceGroupName = "AA102"
 $location = "EastUS"
 
 New-AzResourceGroup -Name $resoureceGroupName -Location $location

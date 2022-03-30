@@ -1,11 +1,11 @@
 # Input bindings are passed in via param block.
-param($Timer)
+param($Every5Seconds)
 
 # Get the current universal time in the default string format
 $currentUTCtime = (Get-Date).ToUniversalTime()
 
 # The 'IsPastDue' porperty is 'true' when the current function invocation is later than scheduled.
-if ($Timer.IsPastDue) {
+if ($Every5Seconds.IsPastDue) {
     Write-Host "PowerShell timer is running late!"
 }
 
@@ -16,9 +16,9 @@ Write-Host "PowerShell timer trigger function ran! TIME: $currentUTCtime"
 # Set up ENVs for WorkspaceId & Key
 # Date Time, UTC :  (Get-Date).ToUniversalTime()
 #########################################
-$tenantId = $env:tenantID
-$clientId = $env:clientID
-$appSecret = $env:appSecret
+$tenantId = $env:tenantId
+$clientId = $env:clientId
+$appSecret = $env:clientSecret
 $WorkspaceId = $env:WorkspaceId
 $SharedKey = $env:SharedKey
 $azstoragestring = $env:AzureWebJobsStorage
@@ -55,17 +55,17 @@ Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
         -contentType $ContentType `
         -resource $resource
     $uri = "https://" + $WorkspaceId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
-    Write-Debug "URI: $uri"
+    Write-Host "URI: $uri"
     $headers = @{
         "Authorization" = $signature;
         "Log-Type" = $type;
         "x-ms-date" = $rfc1123date
         "time-generated-field" = $currentUTCtime
     }
-    Write-Debug "Headers Log Post: $headers"
+    Write-Host "Headers Log Post: $headers"
     $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $ContentType -Headers $headers -Body $body -UseBasicParsing
     Write-Verbose -message ('Post Function Return Code ' + $response.statuscode)
-    Write-Debug "Response Code: $response.statuscode"
+    Write-Host "Response Code: $response.statuscode"
     return $response.statuscode
 }
 
@@ -134,14 +134,14 @@ try{
     $data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
     return $data
 } catch {
-    Write-Debug "Error pulling Adv Data, could be no vaild results: $data.statuscode"
+    Write-Host "Error pulling Adv Data, could be no vaild results: $data.statuscode"
     return $null
 }
 <#
 # Extract the results.
 $data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
 if($data.statuscode -ge 300){
-    Write-Debug "Error pulling Adv Data, could be no vaild results: $data.statuscode"
+    Write-Host "Error pulling Adv Data, could be no vaild results: $data.statuscode"
     return $null
 }else{
     return $data
@@ -160,16 +160,16 @@ $ctx = New-AzStorageContext -ConnectionString $azstoragestring
 $tableName = "LastRead"
 
 # Get Adv Hunting Table Names from Azure Storage Table Service
-$cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
+$cloudTable = (Get-AzStorageTable -Name $tableName -Context $ctx).CloudTable
 $advNames = Get-AzTableRow -table $cloudTable
 $arrNames = $advnames.advTableName
 
 # Loop through all the adv hunting tables
 ForEach ($advName in $arrNames){
-    Write-Debug "--------- CURRENT Table: $advName ---------------------------"
-    Write-Debug "$cloudTable : $advName"
+    Write-Host "--------- CURRENT Table: $advName ---------------------------"
+    Write-Host "$cloudTable : $advName"
     $rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value $advName -operator Equal
-    Write-Debug "RowReturn: $rowReturn"
+    Write-Host "RowReturn: $rowReturn"
     #Check Last Read Value, if blank set for 30 days ago.
     if($rowReturn.LastRead -eq ""){
         $lastRead = (Get-Date).addDays(-30)
@@ -185,18 +185,18 @@ ForEach ($advName in $arrNames){
     }
     #>
     # Auth to M365 API
-    Write-Debug "LastRead: $lastRead"
+    Write-Host "LastRead: $lastRead"
     $headerParams = Get-AuthToken $clientId $appSecret $tenantId 
     # Get data for the table
-    Write-Debug "Header params : $headerParams AdvName: $advname LastRead: $lastRead"
+    Write-Host "Header params : $headerParams AdvName: $advname LastRead: $lastRead"
     $dataReturned = Get-APIData $headerParams $advName $lastRead
-    Write-Debug "dataReturned: $dataReturned"
+    Write-Host "dataReturned: $dataReturned"
     if($null -ne $dataReturned){
-        #Write-Debug "Data Recieved $dataReturned.Length"
+        #Write-Host "Data Recieved $dataReturned.Length"
         if($dataReturned.Length -gt 0){
-            Write-Debug "-WorkspaceId: $WorkspaceId SharedKey $SharedKey AdvName $advName"
+            Write-Host "-WorkspaceId: $WorkspaceId SharedKey $SharedKey AdvName $advName"
             $returnCode = Set-LogAnalyticsData -WorkspaceId $WorkspaceId -SharedKey $SharedKey -Body $dataReturned -Type $advName
-            Write-Debug "Post Statement Return Code $returnCode"
+            Write-Host "Post Statement Return Code $returnCode"
             if ($returnCode -eq 200){
                 # Update LastRead to now
                 $rowReturn.LastRead = $currentUTCtime
