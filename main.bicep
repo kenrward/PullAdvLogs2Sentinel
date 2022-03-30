@@ -128,6 +128,7 @@ resource function_appsettings 'Microsoft.Web/sites/config@2021-03-01' = {
     workspaceID: WorkspaceId
     workspaceKey: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=workspaceKey)'
     WEBSITE_RUN_FROM_PACKAGE: '1'
+    FUNCTIONS_WORKER_RUNTIME_VERSION : '~7'
     tenantId: tenantId
   }
 }

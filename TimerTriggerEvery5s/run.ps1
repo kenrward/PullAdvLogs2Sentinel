@@ -20,7 +20,7 @@ $tenantId = $env:tenantId
 $clientId = $env:clientId
 $appSecret = $env:clientSecret
 $WorkspaceId = $env:WorkspaceId
-$SharedKey = $env:SharedKey
+$SharedKey = $env:workspaceKey
 $azstoragestring = $env:AzureWebJobsStorage
 
 
@@ -44,7 +44,7 @@ Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
     $method = "POST"
     $ContentType = 'application/json'
     $resource = '/api/logs'
-    $rfc1123date = ((Get-Date).ToUniversalTime()).ToString('r')
+    $rfc1123date = $currentUTCtime.ToString('r')
     $ContentLength = $Body.Length
     $signature = Build-signature `
         -customerId $WorkspaceId `
@@ -55,6 +55,7 @@ Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
         -contentType $ContentType `
         -resource $resource
     $uri = "https://" + $WorkspaceId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
+    Write-Host "Signature: $signature"
     Write-Host "URI: $uri"
     $headers = @{
         "Authorization" = $signature;
@@ -63,9 +64,12 @@ Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
         "time-generated-field" = $currentUTCtime
     }
     Write-Host "Headers Log Post: $headers"
-    $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $ContentType -Headers $headers -Body $body -UseBasicParsing
-    Write-Verbose -message ('Post Function Return Code ' + $response.statuscode)
-    Write-Host "Response Code: $response.statuscode"
+    try{
+        $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $ContentType -Headers $headers -Body $body -UseBasicParsing
+        Write-Host "Response Code: $response.statuscode"
+    } catch {
+        Write-Host "Log A Post Error Length: $ContentLength"
+    }
     return $response.statuscode
 }
 
@@ -169,7 +173,7 @@ ForEach ($advName in $arrNames){
     Write-Host "--------- CURRENT Table: $advName ---------------------------"
     Write-Host "$cloudTable : $advName"
     $rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value $advName -operator Equal
-    Write-Host "RowReturn: $rowReturn"
+    # Write-Debug "RowReturn: $rowReturn"
     #Check Last Read Value, if blank set for 30 days ago.
     if($rowReturn.LastRead -eq ""){
         $lastRead = (Get-Date).addDays(-30)
@@ -190,7 +194,7 @@ ForEach ($advName in $arrNames){
     # Get data for the table
     Write-Host "Header params : $headerParams AdvName: $advname LastRead: $lastRead"
     $dataReturned = Get-APIData $headerParams $advName $lastRead
-    Write-Host "dataReturned: $dataReturned"
+    # Write-Host "dataReturned: $dataReturned"
     if($null -ne $dataReturned){
         #Write-Host "Data Recieved $dataReturned.Length"
         if($dataReturned.Length -gt 0){
