@@ -101,7 +101,7 @@ resource kvpolicy 'Microsoft.KeyVault/vaults/accessPolicies@2021-10-01' = {
   properties: {
      accessPolicies: [
       {
-        objectId: resourceId('Microsoft.Web/sites',functionAppName)
+        objectId: reference(resourceId('Microsoft.Web/sites',functionAppName), '2018-02-01', 'Full').identity.principalId
         permissions:{
           secrets:[
             'get'
