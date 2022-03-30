@@ -124,10 +124,15 @@ resource function_appsettings 'Microsoft.Web/sites/config@2021-03-01' = {
     WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
     AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
     clientId: clientId
-    clientSecret: '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}_clientSecret.properties.secretUriWithVersion})'
+    clientSecret: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=clientSecret)'
     workspaceID: WorkspaceId
-    workspaceKey: '@Microsoft.KeyVault(SecretUri=${keyVaultName}_workspaceKey.properties.secretUriWithVersion})'
+    workspaceKey: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=workspaceKey)'
     WEBSITE_RUN_FROM_PACKAGE: 'https://github.com/kenrward/PullAdvLogs2Sentinel/blob/master/PullAdvLogs2Sentinel.zip?raw=true'
     tenantId: tenantId
   }
 }
+
+output strStrAccount string = storageAccountName
+output strFunAppId string = functionApp.id
+output strjKV string = keyVaultName
+
