@@ -13,8 +13,6 @@ $outputs = New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupNam
 foreach ($key in $outputs.Outputs.keys) {
     switch ($key) {
     "strStrAccount" { $strStrAccount = $outputs.Outputs[$key].value }
-    #"strFunAppId" { $strFunAppId = $outputs.Outputs[$key].value }
-    #"strKV" { $strKV = $outputs.Outputs[$key].value }
     }
 }
 
