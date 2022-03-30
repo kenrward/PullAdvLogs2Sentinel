@@ -1,8 +1,8 @@
 
 $today=Get-Date -Format "MM-dd-yyyy"
-$deploymentName="FuncAppDeploy"+"$today"
-$resoureceGroupName = "<ENTER-RG-NAME>"
-$location = "<ENTER-LOCATION>"
+$deploymentName="ExampleDeployment"+"$today"
+$resoureceGroupName = "PL2Sv4"
+$location = "EastUS"
 
 New-AzResourceGroup -Name $resoureceGroupName -Location $location
 
@@ -13,8 +13,8 @@ $outputs = New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupNam
 foreach ($key in $outputs.Outputs.keys) {
     switch ($key) {
     "strStrAccount" { $strStrAccount = $outputs.Outputs[$key].value }
-    # "strFunAppId" { $strFunAppId = $outputs.Outputs[$key].value }
-    # "strKV" { $strKV = $outputs.Outputs[$key].value }
+    "strFunAppId" { $strFunAppId = $outputs.Outputs[$key].value }
+    "strKV" { $strKV = $outputs.Outputs[$key].value }
     }
 }
 
