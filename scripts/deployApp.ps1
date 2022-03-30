@@ -1,20 +1,20 @@
 
 $today=Get-Date -Format "MM-dd-yyyy"
 $deploymentName="ExampleDeployment"+"$today"
-$resoureceGroupName = "PL2Sv4"
+$resoureceGroupName = "AA101"
 $location = "EastUS"
 
 New-AzResourceGroup -Name $resoureceGroupName -Location $location
 
 # Deploy Bicep
-$outputs = New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resoureceGroupName -TemplateFile .\main.bicep -TemplateParameterFile .\parameters.json
+$outputs = New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resoureceGroupName -TemplateFile .\main.bicep -TemplateParameterFile ..\parameters.secure.json
 
 # Get Outpus from Deployment
 foreach ($key in $outputs.Outputs.keys) {
     switch ($key) {
     "strStrAccount" { $strStrAccount = $outputs.Outputs[$key].value }
-    "strFunAppId" { $strFunAppId = $outputs.Outputs[$key].value }
-    "strKV" { $strKV = $outputs.Outputs[$key].value }
+    #"strFunAppId" { $strFunAppId = $outputs.Outputs[$key].value }
+    #"strKV" { $strKV = $outputs.Outputs[$key].value }
     }
 }
 
