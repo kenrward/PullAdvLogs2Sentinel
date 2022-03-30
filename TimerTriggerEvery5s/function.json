@@ -1,7 +1,7 @@
 {
   "bindings": [
     {
-      "name": "Timer",
+      "name": "Every5Seconds",
       "type": "timerTrigger",
       "direction": "in",
       "schedule": "*/5 * * * * *"
