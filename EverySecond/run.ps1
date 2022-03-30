@@ -21,7 +21,7 @@ $clientId = $env:clientID
 $appSecret = $env:appSecret
 $WorkspaceId = $env:WorkspaceId
 $SharedKey = $env:SharedKey
-$azstoragestring = $env:azstoragestring
+$azstoragestring = $env:AzureWebJobsStorage
 
 
 
