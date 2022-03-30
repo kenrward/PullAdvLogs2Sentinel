@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "appName": {
+        "value": ""
+      },
+      "clientSecret": {
+        "value": ""
+      },
+      "tenantId": {
+        "value": ""
+      },
+      "clientId": {
+        "value": ""
+      },
+      "WorkspaceId": {
+        "value": ""
+      },
+      "workspaceKey": {
+        "value": ""
+      }
+    }
+  }
