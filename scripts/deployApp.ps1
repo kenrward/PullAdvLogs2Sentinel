@@ -21,9 +21,9 @@ foreach ($key in $outputs.Outputs.keys) {
 $strkey = Get-AzStorageAccountKey -ResourceGroupName $resoureceGroupName -AccountName $strStrAccount | Where-Object {$_.KeyName -eq "key1"}
 $ctx = New-AzStorageContext -StorageAccountName $strStrAccount -StorageAccountKey $strkey.Value
 $tableName = "LastRead"
-New-AzStorageTable –Name $tableName –Context $ctx
+New-AzStorageTable -Name $tableName -Context $ctx
 
-$cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
+$cloudTable = (Get-AzStorageTable -Name $tableName -Context $ctx).CloudTable
 
 $partitionKey1 = "AdvHuntingTables"
 Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("1") -property @{"advTableName"="EmailEvents";"LastRead"=""}
