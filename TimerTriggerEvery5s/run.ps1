@@ -87,8 +87,14 @@ function Get-AuthToken{
             [Parameter(Mandatory = $true, Position = 2)]
             [string]$tenantId
         )
+# M365 Public Endpoints        
+#$resourceAppIdUri = 'https://api.security.microsoft.us'
+#$oAuthUri = "https://login.windows.net/$tenantId/oauth2/token"
+
+# GCC URLs - see https://docs.microsoft.com/en-us/microsoft-365/security/defender/usgov?view=o365-worldwide
 $resourceAppIdUri = 'https://api-gcc.security.microsoft.us'
 $oAuthUri = "https://login.microsoftonline.com/$tenantId/oauth2/token"
+
 $authBody = [Ordered] @{
   resource = $resourceAppIdUri
   client_id = $clientId

@@ -1,8 +1,17 @@
 ## PROOF of CONCEPT ONLY
 
-This code is a proof of concept to show how data can be pulled from M365 Advanced Hunting API to Azure Sentinel.  It is **NOT** prodcution ready code.  Author assumes no responsibility for its use nor implies any warranty.
+This code is a proof of concept to show how data can be pulled from M365 Advanced Hunting API GCC to Azure Sentinel.  It is **NOT** prodcution ready code.  Author assumes no responsibility for its use nor implies any warranty.
 
 # Setup
+
+This script was written for GCC endpoints.  If you need M365 Public, GCC-H or DoD, please change the following in `run.ps1`:
+
+``` powershell
+#$resourceAppIdUri = 'https://api-gcc.security.microsoft.us'
+#$oAuthUri = "https://login.microsoftonline.com/$tenantId/oauth2/token"
+```
+
+GCC-H and DoD endpoint urls can be found here: <https://docs.microsoft.com/en-us/microsoft-365/security/defender/usgov?view=o365-worldwide>
 
 ## Function App Config
 
@@ -17,7 +26,7 @@ Directions can be found here: <https://github.com/Azure/Azure-Sentinel/tree/mast
 
 ### 2. Bicep Install
 
-```
+``` powershell
 # Create the install folder
 $installPath = "$env:USERPROFILE\.bicep"
 $installDir = New-Item -ItemType Directory -Path $installPath -Force
