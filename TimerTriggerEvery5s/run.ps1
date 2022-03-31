@@ -63,12 +63,12 @@ Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
         "x-ms-date" = $rfc1123date
         "time-generated-field" = $currentUTCtime
     }
-    Write-Host "Headers Log Post: $headers"
+    "Headers Log Post: {0}" -f $headers | Write-Host 
     try{
         $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $ContentType -Headers $headers -Body $body -UseBasicParsing
-        Write-Host "Response Code: $response.statuscode"
+        "Response Code: {0}" -f $response.statuscode | Write-Host 
     } catch {
-        Write-Host "Log A Post Error Length: $ContentLength"
+        "Log A Post Error Length: {0}" -f $ContentLength | Write-Host 
     }
     return $response.statuscode
 }
@@ -144,7 +144,7 @@ try{
     $data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
     return $data
 } catch {
-    Write-Host "Error pulling Adv Data, could be no vaild results: $data.statuscode"
+    "Error pulling Adv Data, could be no vaild results: {0}" -f $data.statuscode | Write-Host 
     return $null
 }
 <#
@@ -177,7 +177,7 @@ $arrNames = $advnames.advTableName
 # Loop through all the adv hunting tables
 ForEach ($advName in $arrNames){
     Write-Host "--------- CURRENT Table: $advName ---------------------------"
-    Write-Host "$cloudTable : $advName"
+    "{0} : {1}" -f $cloudTable $advName | Write-Host 
     $rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value $advName -operator Equal
     # Write-Debug "RowReturn: $rowReturn"
     #Check Last Read Value, if blank set for 30 days ago.
@@ -195,18 +195,17 @@ ForEach ($advName in $arrNames){
     }
     #>
     # Auth to M365 API
-    Write-Host "LastRead: $lastRead"
     $headerParams = Get-AuthToken $clientId $appSecret $tenantId 
     # Get data for the table
-    Write-Host "Header params : $headerParams AdvName: $advname LastRead: $lastRead"
+    "Header params :  {0} AdvName: {1} LastRead: {2}" -f $headerParams,$advname,$lastRead | Write-Host 
     $dataReturned = Get-APIData $headerParams $advName $lastRead
-    Write-Host "Data Recieved Length: $dataReturned.Length Next Page: $dataReturned.Headers.NextPageUrl"
+    "Data Recieved Length: {0} Next Page: {1}" -f $dataReturned.Length,$dataReturned.Headers.NextPageUrl | Write-Host 
     if($null -ne $dataReturned){
         #Write-Host "Data Recieved $dataReturned.Length"
         if($dataReturned.Length -gt 0){
-            Write-Host "-WorkspaceId: $WorkspaceId SharedKey $SharedKey AdvName $advName Data Return Length: $dataReturned.Length "
+            "WorkspaceId: {0} SharedKey {1}  AdvName {2} Data Return Length: {3}" -f $advName,$SharedKey,$WorkspaceId,$dataReturned.Length | Write-Host 
             $returnCode = Set-LogAnalyticsData -WorkspaceId $WorkspaceId -SharedKey $SharedKey -Body $dataReturned -Type $advName
-            Write-Host "Post Statement Return Code $returnCode"
+            "Post Statement Return Code {0}" -f $returnCode | Write-Host 
             if ($returnCode -eq 200){
                 # Update LastRead to now
                 $rowReturn.LastRead = $currentUTCtime
