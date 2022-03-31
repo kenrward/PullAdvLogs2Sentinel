@@ -25,10 +25,13 @@ New-AzStorageTable -Name $tableName -Context $ctx
 
 $cloudTable = (Get-AzStorageTable -Name $tableName -Context $ctx).CloudTable
 
+$lastRead = (Get-Date).addDays(-30)
+
 $partitionKey1 = "AdvHuntingTables"
-Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("1") -property @{"advTableName"="EmailEvents";"LastRead"=""}
-Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("2") -property @{"advTableName"="EmailAttachmentInfo";"LastRead"=""}
-Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("3") -property @{"advTableName"="EmailUrlInfo";"LastRead"=""}
-Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("4") -property @{"advTableName"="EmailPostDeliveryEvents";"LastRead"=""}
+Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("1") -property @{"advTableName"="EmailEvents";"LastRead"=$lastRead}
+Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("2") -property @{"advTableName"="EmailAttachmentInfo";"LastRead"=$lastRead}
+Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("3") -property @{"advTableName"="EmailUrlInfo";"LastRead"=$lastRead}
+Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("4") -property @{"advTableName"="EmailPostDeliveryEvents";"LastRead"=$lastRead}
+Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("5") -property @{"advTableName"="CloudAppEvents";"LastRead"=$lastRead}
 
 # Validate the Function App has access to KeyVault

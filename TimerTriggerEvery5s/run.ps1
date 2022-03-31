@@ -200,11 +200,11 @@ ForEach ($advName in $arrNames){
     # Get data for the table
     Write-Host "Header params : $headerParams AdvName: $advname LastRead: $lastRead"
     $dataReturned = Get-APIData $headerParams $advName $lastRead
-    # Write-Host "dataReturned: $dataReturned"
+    Write-Host "Data Recieved Length: $dataReturned.Length Next Page: $dataReturned.Headers.NextPageUrl"
     if($null -ne $dataReturned){
         #Write-Host "Data Recieved $dataReturned.Length"
         if($dataReturned.Length -gt 0){
-            Write-Host "-WorkspaceId: $WorkspaceId SharedKey $SharedKey AdvName $advName"
+            Write-Host "-WorkspaceId: $WorkspaceId SharedKey $SharedKey AdvName $advName Data Return Length: $dataReturned.Length "
             $returnCode = Set-LogAnalyticsData -WorkspaceId $WorkspaceId -SharedKey $SharedKey -Body $dataReturned -Type $advName
             Write-Host "Post Statement Return Code $returnCode"
             if ($returnCode -eq 200){
