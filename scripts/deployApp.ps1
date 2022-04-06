@@ -7,7 +7,7 @@ $location = "EastUS"
 New-AzResourceGroup -Name $resoureceGroupName -Location $location
 
 # Deploy Bicep
-$outputs = New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resoureceGroupName -TemplateFile .\main.bicep -TemplateParameterFile ..\parameters.secure.json
+$outputs = New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resoureceGroupName -TemplateFile ..\main.bicep -TemplateParameterFile ..\parameters.json
 
 # Get Outpus from Deployment
 foreach ($key in $outputs.Outputs.keys) {
