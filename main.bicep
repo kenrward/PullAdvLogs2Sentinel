@@ -119,16 +119,16 @@ resource function_appsettings 'Microsoft.Web/sites/config@2021-03-01' = {
   properties: {
     FUNCTIONS_EXTENSION_VERSION: '~3'
     FUNCTIONS_WORKER_RUNTIME: 'powershell'
+    FUNCTIONS_WORKER_RUNTIME_VERSION : '~7'
     APPINSIGHTS_INSTRUMENTATIONKEY: appInsights.properties.InstrumentationKey
-    WEBSITE_CONTENTSHARE: storageAccountName
-    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+    //WEBSITE_CONTENTSHARE: storageAccountName
+    //WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
     AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
     clientId: clientId
     clientSecret: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=clientSecret)'
     workspaceID: WorkspaceId
     workspaceKey: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=workspaceKey)'
     WEBSITE_RUN_FROM_PACKAGE: 'https://github.com/kenrward/PullAdvLogs2Sentinel/blob/master/WebDeploy.zip?raw=true'
-    FUNCTIONS_WORKER_RUNTIME_VERSION : '~7'
     tenantId: tenantId
   }
 }
