@@ -68,7 +68,7 @@ Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
         $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $ContentType -Headers $headers -Body $body -UseBasicParsing
         "Response Code: {0}" -f $response.statuscode | Write-Host 
     } catch {
-        "Log A Post Error Length: {0}" -f $ContentLength | Write-Error
+        "Log A Post Error Length: {0}" -f $ContentLength | Write-Error 
     }
     return $response.statuscode
 }
@@ -177,7 +177,7 @@ $arrNames = $advnames.advTableName
 # Loop through all the adv hunting tables
 ForEach ($advName in $arrNames){
     Write-Host "--------- CURRENT Table: $advName ---------------------------"
-    "{0} : {1}" -f $cloudTable,$advName | Write-Debug
+    "Get-AzTableRow -table {0} -ColumnName 'advTableName'-value {1} -operator Equal" -f $cloudTable,$advName | Write-Host 
     $rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value $advName -operator Equal
     # Write-Debug "RowReturn: $rowReturn"
     #Check Last Read Value, if blank set for 30 days ago.
@@ -197,7 +197,7 @@ ForEach ($advName in $arrNames){
     # Auth to M365 API
     $headerParams = Get-AuthToken $clientId $appSecret $tenantId 
     # Get data for the table
-    "Header params :  {0} AdvName: {1} LastRead: {2}" -f $headerParams,$advname,$lastRead | Write-Host 
+    "Header params :  {0} AdvName: {1} LastRead: {2}" -f $headerParams,$advname,$lastRead | Write-Debug 
     $dataReturned = Get-APIData $headerParams $advName $lastRead
     "Data Recieved Length: {0} Next Page: {1}" -f $dataReturned.Length,$dataReturned.Headers.NextPageUrl | Write-Host 
     if($null -ne $dataReturned){
@@ -215,5 +215,6 @@ ForEach ($advName in $arrNames){
         }
     }
 }
+
 
 return $returnCode
