@@ -68,7 +68,7 @@ Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
         $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $ContentType -Headers $headers -Body $body -UseBasicParsing
         "Response Code: {0}" -f $response.statuscode | Write-Host 
     } catch {
-        "Log A Post Error Length: {0}" -f $ContentLength | Write-Host 
+        "Log A Post Error Length: {0}" -f $ContentLength | Write-Error
     }
     return $response.statuscode
 }
@@ -144,7 +144,7 @@ try{
     $data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
     return $data
 } catch {
-    "Error pulling Adv Data, could be no vaild results: {0}" -f $data.statuscode | Write-Host 
+    "Error pulling Adv Data, could be no vaild results: {0}" -f $data.statuscode | Write-Error
     return $null
 }
 <#
@@ -177,7 +177,7 @@ $arrNames = $advnames.advTableName
 # Loop through all the adv hunting tables
 ForEach ($advName in $arrNames){
     Write-Host "--------- CURRENT Table: $advName ---------------------------"
-    "{0} : {1}" -f $cloudTable $advName | Write-Host 
+    "{0} : {1}" -f $cloudTable,$advName | Write-Debug
     $rowReturn = Get-AzTableRow -table $cloudTable -ColumnName "advTableName" -value $advName -operator Equal
     # Write-Debug "RowReturn: $rowReturn"
     #Check Last Read Value, if blank set for 30 days ago.
