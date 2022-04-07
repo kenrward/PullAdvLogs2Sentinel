@@ -128,7 +128,7 @@ resource function_appsettings 'Microsoft.Web/sites/config@2021-03-01' = {
     clientSecret: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=clientSecret)'
     workspaceID: WorkspaceId
     workspaceKey: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=workspaceKey)'
-    WEBSITE_RUN_FROM_PACKAGE: 'https://github.com/kenrward/PullAdvLogs2Sentinel/blob/master/WebDeploy.zip?raw=true'
+    WEBSITE_RUN_FROM_PACKAGE: 'https://github.com/kenrward/PullAdvLogs2Sentinel/blob/master/Deploy.zip?raw=true'
     tenantId: tenantId
   }
 }
