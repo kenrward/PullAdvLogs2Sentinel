@@ -134,5 +134,6 @@ resource function_appsettings 'Microsoft.Web/sites/config@2021-03-01' = {
 }
 
 output strStrAccount string = storageAccountName
+output strFuncAppName string = functionAppName
 
 

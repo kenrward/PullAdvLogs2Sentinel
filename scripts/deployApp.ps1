@@ -13,6 +13,7 @@ $outputs = New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupNam
 foreach ($key in $outputs.Outputs.keys) {
     switch ($key) {
     "strStrAccount" { $strStrAccount = $outputs.Outputs[$key].value }
+    "strFuncAppName" { $funcAppName = $outputs.Outputs[$key].value }
     }
 }
 
@@ -35,3 +36,4 @@ Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("4") -p
 Add-AzTableRow  -table $cloudTable -partitionKey $partitionKey1 -rowKey ("5") -property @{"advTableName"="CloudAppEvents";"LastRead"=$lastRead}
 
 # Validate the Function App has access to KeyVault
+Publish-AzWebapp -ResourceGroupName $resoureceGroupName -Name $funcAppName -ArchivePath "https://github.com/kenrward/PullAdvLogs2Sentinel/blob/master/Deploy.zip?raw=true"
