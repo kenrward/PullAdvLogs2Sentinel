@@ -4,6 +4,12 @@ This code is a proof of concept to show how data can be pulled from M365 Advance
 
 # Setup
 
+## AAD Application Setup
+
+Follow steps here to setup an Azure AD Application with API permissions <https://github.com/Azure/Azure-Sentinel/tree/master/DataConnectors/O365%20Data#onboarding-azure-sentinel>
+
+## Endpoints
+
 This script was written for GCC endpoints.  If you need M365 Public, GCC-H or DoD, please change the following in `run.ps1`:
 
 ``` powershell
