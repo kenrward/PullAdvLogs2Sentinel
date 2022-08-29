@@ -48,6 +48,9 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
    name: 'Y1'
    tier: 'Dynamic'
  }
+  properties: {
+  
+ }
 }
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: keyVaultName
