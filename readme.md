@@ -47,3 +47,7 @@ if (-not $env:path.Contains($installPath)) { $env:path += ";$installPath" }
 bicep --help
 # Done!
 ```
+#3 Install Azure Storage Module
+```
+Install-Module AzTable
+```
