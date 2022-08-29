@@ -23,8 +23,9 @@ GCC-H and DoD endpoint urls can be found here: <https://docs.microsoft.com/en-us
 
   1. Create an Azure AD App, grant permissions
   2. Install Bicep (see installBicep.ps1 in this repo)
-  3. Set parameters in parameters.json file
-  4. Run deployApp.ps1
+  3. Install Azure Storage Module (see below)
+  4. Set parameters in parameters.json file
+  5. Run deployApp.ps1
 
 ### 1. Create Azure AD App
 
