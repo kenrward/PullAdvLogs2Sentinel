@@ -1,6 +1,6 @@
 ## PROOF of CONCEPT ONLY
 
-This code is a proof of concept to show how data can be pulled from M365 Advanced Hunting API GCC to Azure Sentinel.  It is **NOT** prodcution ready code.  Author assumes no responsibility for its use nor implies any warranty.
+This code is a proof of concept to show how data can be pulled from M365 Advanced Hunting API GCC to Azure Sentinel.  It is **NOT** production ready code.  Author assumes no responsibility for its use nor implies any warranty.
 
 # Setup
 
