@@ -22,6 +22,42 @@ $appSecret = $env:clientSecret
 $WorkspaceId = $env:WorkspaceId
 $SharedKey = $env:workspaceKey
 $azstoragestring = $env:AzureWebJobsStorage
+$Access_Policy_Name="RootManageSharedAccessKey"
+## Retrieve Environment Variables
+$URI = $env:EventHubURI
+$Access_Policy_Key = $env:EventHubAccessPolicyKey
+
+
+function SendEvent ($body) {
+    [Reflection.Assembly]::LoadWithPartialName("System.Web")| out-null
+    #Token expires now+3000
+    $Expires=([DateTimeOffset]::Now.ToUnixTimeSeconds())+3000
+    $SignatureString=[System.Web.HttpUtility]::UrlEncode($URI)+ "`n" + [string]$Expires
+    $HMAC = New-Object System.Security.Cryptography.HMACSHA256
+    $HMAC.key = [Text.Encoding]::ASCII.GetBytes($Access_Policy_Key)
+    $Signature = $HMAC.ComputeHash([Text.Encoding]::ASCII.GetBytes($SignatureString))
+    $Signature = [Convert]::ToBase64String($Signature)
+    $SASToken = "SharedAccessSignature sr=" + [System.Web.HttpUtility]::UrlEncode($URI) + "&sig=" + [System.Web.HttpUtility]::UrlEncode($Signature) + "&se=" + $Expires + "&skn=" + $Access_Policy_Name
+    # $SASToken
+    $method = "POST"
+    $signature = $SASToken
+    # API headers
+    $headers = @{
+                "Authorization"=$signature;
+                "Content-Type"="application/atom+xml;type=entry;charset=utf-8";
+                }
+    # execute the Azure REST API
+    $response
+    try {
+        $response = Invoke-RestMethod -Uri $URI -Method $method -Headers $headers -Body $body 
+        Write-Host "Event Sent Successfully"
+    }
+    catch {
+        "Error Code: {0}" -f $response.Code | Write-Host
+        Write-Host "Error Sending the Event"
+    }
+    return $response.Code
+}
 
 
 
@@ -122,13 +158,13 @@ function Get-APIData{
         )
 $url = "https://api-gcc.security.microsoft.us/api/advancedhunting/run"
 
-$Body = @{
+<# $Body = @{
     'Query' = '{0} | where Timestamp > datetime("{1}")' -f $advHTableName,$lastRead
-}
+} #>
 
-#$Body = @{
-#    'Query' = 'EmailEvents | take 2'
-#}
+$Body = @{
+    'Query' = 'EmailEvents | take 2'
+}
 
 # Set the webrequest headers
 $headers = @{
@@ -201,10 +237,11 @@ ForEach ($advName in $arrNames){
     $dataReturned = Get-APIData $headerParams $advName $lastRead
     "Data Recieved Length: {0} Next Page: {1}" -f $dataReturned.Length,$dataReturned.Headers.NextPageUrl | Write-Host 
     if($null -ne $dataReturned){
-        #Write-Host "Data Recieved $dataReturned.Length"
+        Write-Host "Data Recieved $dataReturned.Length"
         if($dataReturned.Length -gt 0){
             "WorkspaceId: {0} SharedKey {1}  AdvName {2} Data Return Length: {3}" -f $advName,$SharedKey,$WorkspaceId,$dataReturned.Length | Write-Host 
             $returnCode = Set-LogAnalyticsData -WorkspaceId $WorkspaceId -SharedKey $SharedKey -Body $dataReturned -Type $advName
+            SendEvent($dataReturned)
             "Post Statement Return Code {0}" -f $returnCode | Write-Host 
             if ($returnCode -eq 200){
                 # Update LastRead to now
