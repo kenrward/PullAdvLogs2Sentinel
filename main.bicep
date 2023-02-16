@@ -1,13 +1,13 @@
 @secure()
 param clientSecret string
 @secure()
-param workspaceKey string
+param EventHubAccessPolicyKey string
 
 param appName string
 param location string = resourceGroup().location
 param tenantId string
 param clientId string
-param WorkspaceId string
+param EventHubURI string
 
 
 
@@ -74,9 +74,9 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
     }
   }
   resource kvsw 'secrets' = {
-    name: 'workspaceKey'
+    name: 'EventHubAccessPolicyKey'
     properties: {
-      value: workspaceKey
+      value: EventHubAccessPolicyKey
     }
   }
 }
@@ -129,8 +129,8 @@ resource function_appsettings 'Microsoft.Web/sites/config@2021-03-01' = {
     AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
     clientId: clientId
     clientSecret: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=clientSecret)'
-    workspaceID: WorkspaceId
-    workspaceKey: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=workspaceKey)'
+    EventHubURI: EventHubURI
+    EventHubAccessPolicyKey: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=EventHubAccessPolicyKey)'
     WEBSITE_RUN_FROM_PACKAGE: 'https://github.com/kenrward/PullAdvLogs2Sentinel/blob/master/Deploy.zip?raw=true'
     tenantId: tenantId
   }

@@ -14,10 +14,10 @@
       "clientId": {
         "value": ""
       },
-      "WorkspaceId": {
+      "EventHubURI": {
         "value": ""
       },
-      "workspaceKey": {
+      "EventHubAccessPolicyKey": {
         "value": ""
       }
     }

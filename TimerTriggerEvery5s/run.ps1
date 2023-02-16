@@ -73,42 +73,6 @@ function Build-signature ($CustomerID, $SharedKey, $Date, $ContentLength, $metho
     $authorization = 'SharedKey {0}:{1}' -f $CustomerID,$encodeHash
     return $authorization
 }
-#############################################################################
-## Set-LogAnalyticsData
-#############################################################################
-Function Set-LogAnalyticsData ($WorkspaceId, $SharedKey, $Body, $Type) {
-    $method = "POST"
-    $ContentType = 'application/json'
-    $resource = '/api/logs'
-    $rfc1123date = $currentUTCtime.ToString('r')
-    $ContentLength = $Body.Length
-    $signature = Build-signature `
-        -customerId $WorkspaceId `
-        -sharedKey $SharedKey `
-        -date $rfc1123date `
-        -contentLength $ContentLength `
-        -method $method `
-        -contentType $ContentType `
-        -resource $resource
-    $uri = "https://" + $WorkspaceId + ".ods.opinsights.azure.com" + $resource + "?api-version=2016-04-01"
-    Write-Host "Signature: $signature"
-    Write-Host "URI: $uri"
-    $headers = @{
-        "Authorization" = $signature;
-        "Log-Type" = $type;
-        "x-ms-date" = $rfc1123date
-        "time-generated-field" = $currentUTCtime
-    }
-    "Headers Log Post: {0}" -f $headers | Write-Host 
-    try{
-        $response = Invoke-WebRequest -Uri $uri -Method $method -ContentType $ContentType -Headers $headers -Body $body -UseBasicParsing
-        "Response Code: {0}" -f $response.statuscode | Write-Host 
-    } catch {
-        "Log A Post Error Length: {0}" -f $ContentLength | Write-Host 
-    }
-    return $response.statuscode
-}
-
 
 #############################################################################
 ## Logon to API to grap token
@@ -123,9 +87,6 @@ function Get-AuthToken{
             [Parameter(Mandatory = $true, Position = 2)]
             [string]$tenantId
         )
-# M365 Public Endpoints        
-#$resourceAppIdUri = 'https://api.security.microsoft.us'
-#$oAuthUri = "https://login.windows.net/$tenantId/oauth2/token"
 
 # GCC URLs - see https://docs.microsoft.com/en-us/microsoft-365/security/defender/usgov?view=o365-worldwide
 $resourceAppIdUri = 'https://graph.microsoft.com'
@@ -224,6 +185,26 @@ ForEach ($advName in $arrNames){
                 # To commit the change, pipe the updated record into the update cmdlet.
                 $rowReturn | Update-AzTableRow -table $cloudTable
             }
+        }
+    }
+}
+
+# Auth to M365 API
+$headerParams = Get-AuthToken $clientId $appSecret $tenantId 
+# Get data for the table
+"Header params :  {0} AdvName: {1} LastRead: {2}" -f $headerParams,$advname,$lastRead | Write-Debug 
+$dataReturned = Get-APIData $headerParams $advName $lastRead
+"Data Recieved Length: {0} Next Page: {1}" -f $dataReturned.Length,$dataReturned.Headers.NextPageUrl | Write-Host 
+if($null -ne $dataReturned){
+    Write-Host "Data Recieved $dataReturned.Length"
+    if($dataReturned.Length -gt 0){
+        $returnCode = SendEvent($dataReturned)
+        "Post Statement Return Code {0}" -f $returnCode | Write-Host 
+        if ($returnCode -eq 200){
+            # Update LastRead to now
+            $rowReturn.LastRead = $currentUTCtime
+            # To commit the change, pipe the updated record into the update cmdlet.
+            $rowReturn | Update-AzTableRow -table $cloudTable
         }
     }
 }
