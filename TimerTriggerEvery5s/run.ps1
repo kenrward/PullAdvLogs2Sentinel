@@ -128,8 +128,8 @@ function Get-AuthToken{
 #$oAuthUri = "https://login.windows.net/$tenantId/oauth2/token"
 
 # GCC URLs - see https://docs.microsoft.com/en-us/microsoft-365/security/defender/usgov?view=o365-worldwide
-$resourceAppIdUri = 'https://api-gcc.security.microsoft.us'
-$oAuthUri = "https://login.microsoftonline.com/$tenantId/oauth2/token"
+$resourceAppIdUri = 'https://graph.microsoft.com'
+$oAuthUri = "https://login.windows.net/$tenantId/oauth2/token"
 
 $authBody = [Ordered] @{
   resource = $resourceAppIdUri
@@ -156,15 +156,8 @@ function Get-APIData{
             [Parameter(Mandatory = $true, Position = 2)]
             [string]$lastRead
         )
-$url = "https://api-gcc.security.microsoft.us/api/advancedhunting/run"
+$url = "https://graph.microsoft.com/v1.0/deviceManagement/auditEvents"
 
-<# $Body = @{
-    'Query' = '{0} | where Timestamp > datetime("{1}")' -f $advHTableName,$lastRead
-} #>
-
-$Body = @{
-    'Query' = 'EmailEvents | take 2'
-}
 
 # Set the webrequest headers
 $headers = @{
@@ -176,23 +169,14 @@ $headers = @{
 $Body = $Body | ConvertTo-Json
 
 try{
-    $response = Invoke-WebRequest -Method Post -Body $body -Uri $url -Headers $headers -ErrorAction Stop
+    $response = Invoke-WebRequest -Method Get -Uri $url -Headers $headers -ErrorAction Stop
     $data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
     return $data
 } catch {
     "Error pulling Adv Data, could be no vaild results: {0}" -f $data.statuscode | Write-Host 
     return $null
 }
-<#
-# Extract the results.
-$data =  ($response | ConvertFrom-Json).results | ConvertTo-Json -Depth 99
-if($data.statuscode -ge 300){
-    Write-Host "Error pulling Adv Data, could be no vaild results: $data.statuscode"
-    return $null
-}else{
-    return $data
-}
-#>
+
 }
 
 #############################################################################
@@ -223,13 +207,6 @@ ForEach ($advName in $arrNames){
         $lastRead = $rowReturn.LastRead
     }
 
-    # Check if time is UTC, Convert to UTC if not.
-    <# 
-    if ($lastRead.kind.tostring() -ne 'Utc'){
-        $lastRead = $lastRead.ToUniversalTime()
-        Write-Verbose -Message $lastRead
-    }
-    #>
     # Auth to M365 API
     $headerParams = Get-AuthToken $clientId $appSecret $tenantId 
     # Get data for the table
@@ -239,9 +216,7 @@ ForEach ($advName in $arrNames){
     if($null -ne $dataReturned){
         Write-Host "Data Recieved $dataReturned.Length"
         if($dataReturned.Length -gt 0){
-            "WorkspaceId: {0} SharedKey {1}  AdvName {2} Data Return Length: {3}" -f $advName,$SharedKey,$WorkspaceId,$dataReturned.Length | Write-Host 
-            $returnCode = Set-LogAnalyticsData -WorkspaceId $WorkspaceId -SharedKey $SharedKey -Body $dataReturned -Type $advName
-            SendEvent($dataReturned)
+            $returnCode = SendEvent($dataReturned)
             "Post Statement Return Code {0}" -f $returnCode | Write-Host 
             if ($returnCode -eq 200){
                 # Update LastRead to now
